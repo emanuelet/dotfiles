@@ -1,0 +1,17 @@
+# Secrets
+.zshrc_secrets
+.env
+*.pem
+*.key
+
+# Security directories
+.ssh/
+.gnupg/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Large caches
+.zsh/cache/
+.zcompdump*
