@@ -57,6 +57,8 @@ alias l='ls -CF'
 
 alias pn="pnpm"
 
+alias upg='sudo apt update && sudo apt upgrade'
+
 ### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
 export PATH="/home/emanuele/.rd/bin:$PATH"
 ### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
@@ -121,3 +123,11 @@ compinit -C
 if [[ ! -f ~/.zshrc.zwc || ~/.zshrc -nt ~/.zshrc.zwc ]]; then
   zcompile ~/.zshrc
 fi
+
+# pnpm
+export PNPM_HOME="/home/emanuele/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
