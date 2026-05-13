@@ -1,0 +1,6 @@
+[tools]
+chezmoi = "2.70.0"
+node = "lts"
+pnpm = "latest"
+python = "latest"
+uv = "latest"

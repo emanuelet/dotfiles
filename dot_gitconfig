@@ -1,0 +1,5 @@
+[user]
+	name = Emanuele Tonello
+	email = emanuele@conpago.com.au
+[pull]
+	rebase = true
