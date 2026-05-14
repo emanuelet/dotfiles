@@ -11,29 +11,39 @@ GITHUB_USER="emanuelet"
 # ── 1. System packages & repos ──────────────────────────────
 sudo apt update && sudo apt upgrade -y
 
+sudo apt install -y \
+  zsh \
+  vim \
+  git \
+  curl \
+  wget
+
 # Add third-party repo keys and sources
 # 1Password
 sudo install -d /usr/share/keyrings
-curl -fsSL https://downloads.1password.com/linux/keys/1password-archive-keyring.gpg \
-  | sudo tee /usr/share/keyrings/1password-archive-keyring.gpg >/dev/null
-echo "deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main" \
-  | sudo tee /etc/apt/sources.list.d/1password.list
+curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
+sudo mkdir -p /etc/debsig/policies/AC2D62742012EA22/
+	curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol | sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol
+	sudo mkdir -p /usr/share/debsig/keyrings/AC2D62742012EA22
+	curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main' | sudo tee /etc/apt/sources.list.d/1password.list
 
 # GitHub CLI
 sudo install -d /etc/apt/keyrings
-curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-  | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg >/dev/null
-echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-  | sudo tee /etc/apt/sources.list.d/github-cli.list
+(type -p wget >/dev/null || (sudo apt update && sudo apt install wget -y)) \
+	&& sudo mkdir -p -m 755 /etc/apt/keyrings \
+	&& out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+	&& cat $out | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+	&& sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+	&& sudo mkdir -p -m 755 /etc/apt/sources.list.d \
+	&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
 
 # Google Cloud SDK
-curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg \
-  | sudo tee /usr/share/keyrings/cloud.google.gpg >/dev/null
-echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" \
-  | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
 
 # VS Code
-curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
+curl -vfsSL https://packages.microsoft.com/keys/microsoft.asc \
   | sudo tee /usr/share/keyrings/microsoft.gpg >/dev/null
 sudo tee /etc/apt/sources.list.d/vscode.sources >/dev/null <<'VSCEOF'
 Types: deb
@@ -45,8 +55,12 @@ Signed-By: /usr/share/keyrings/microsoft.gpg
 VSCEOF
 
 # Windsurf
-curl -fsSL https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/apt/keyring.gpg \
-  | sudo tee /etc/apt/keyrings/windsurf-stable.gpg >/dev/null
+sudo apt-get install wget gpg
+wget -qO- "https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/windsurf.gpg" | gpg --dearmor > windsurf-stable.gpg
+sudo install -D -o root -g root -m 644 windsurf-stable.gpg /etc/apt/keyrings/windsurf-stable.gpg
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/windsurf-stable.gpg] https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/apt stable main" | sudo tee /etc/apt/sources.list.d/windsurf.list > /dev/null
+rm -f windsurf-stable.gpg
+
 echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/windsurf-stable.gpg] https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/apt stable main" \
   | sudo tee /etc/apt/sources.list.d/windsurf.list
 
@@ -56,7 +70,7 @@ echo "deb https://packagecloud.io/slacktechnologies/slack/debian/ jessie main" \
 
 # Docker Engine
 sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo curl -vfsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 sudo chmod a+r /etc/apt/keyrings/docker.asc
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
   | sudo tee /etc/apt/sources.list.d/docker.list
@@ -65,12 +79,7 @@ sudo apt update
 
 # Core CLI tools
 sudo apt install -y \
-  zsh \
-  vim \
-  git \
   gh \
-  curl \
-  wget \
   build-essential \
   gfortran \
   libblas-dev \
@@ -85,23 +94,41 @@ sudo apt install -y \
   synaptic \
   alsa-utils \
   meld \
-  docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin \
+  ca-certificates gnupg
 
 # Switch to zsh immediately so subsequent steps rely on it
 sudo chsh -s "$(which zsh)" "$(whoami)"
 
 # External .deb packages (manual download might be needed for new Ubuntu)
 # Uncomment and adjust URLs as needed:
-sudo apt install -y code        # or apt install code from MS repo
 sudo apt install -y 1password            # from 1password repo
-sudo apt install -y slack-desktop        # from slack repo
 sudo apt install -y windsurf             # from windsurf repo
 sudo apt install -y google-cloud-cli     # from gcloud repo
-# libreoffice is pre-installed on Ubuntu
+# use firefox ppa
+
+sudo snap remove firefox
+sudo install -d -m 0755 /etc/apt/keyrings
+wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O- | sudo tee /etc/apt/keyrings/packages.mozilla.org.asc > /dev/null
+echo "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main" | sudo tee -a /etc/apt/sources.list.d/mozilla.list > /dev/null
+
+echo '
+Package: *
+Pin: origin packages.mozilla.org
+Pin-Priority: 1000
+
+Package: firefox*
+Pin: release o=Ubuntu
+Pin-Priority: -1' | sudo tee /etc/apt/preferences.d/mozilla
+
+sudo apt update && sudo apt remove firefox
+
+sudo apt install firefox
 
 # ── 2. Flatpak ──────────────────────────────────────────────
 # Install flatpak if not present (Ubuntu includes it)
 sudo apt install -y flatpak
+sudo apt install gnome-software-plugin-flatpak
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 flatpak install -y flathub \
@@ -110,29 +137,35 @@ flatpak install -y flathub \
   com.stremio.Stremio \
   org.telegram.desktop \
   org.gimp.GIMP \
-  com.rtosta.zapzap
+  com.rtosta.zapzap \
+  com.mattjakeman.ExtensionManager
 
 # ── 3. chezmoi (dotfiles) ────────────────────────────────────
 if ! command -v chezmoi &>/dev/null; then
   sudo apt install -y chezmoi || sh -c "$(curl -fsLS git.io/chezmoi)" -- init --apply "$GITHUB_USER"
 fi
 
+source ~/.zshrc
+
 # After initial setup, run:
 #   chezmoi init --apply $GITHUB_USER
 # (this will deploy your .zshrc and other managed dotfiles)
+
+curl -fsSL https://opencode.ai/install | bash
 
 # ── 4. mise (runtime version manager) ────────────────────────
 if ! command -v mise &>/dev/null; then
   curl https://mise.run | sh
 fi
-eval "$(~/.local/bin/mise activate bash)"
+eval "$(~/.local/bin/mise activate zsh)"
 
 # Install runtimes defined in ~/.config/mise/config.toml
 mise install
 mise use -g node@lts
 mise use -g python@latest
-mise use -g pnpm@latest
+mise use -g pnpm
 mise use -g uv@latest
+
 
 # ── 5. pnpm global packages ──────────────────────────────────
 pnpm add -g \
