@@ -59,12 +59,9 @@ alias pn="pnpm"
 
 alias upg='sudo apt update && sudo apt upgrade'
 
-### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
-export PATH="/home/emanuele/.rd/bin:$PATH"
-### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
-
 # opencode
 export PATH=/home/emanuele/.opencode/bin:$PATH
+
 eval "$(~/.local/bin/mise activate zsh)"
 
 ### Added by Zinit's installer
