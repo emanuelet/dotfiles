@@ -1,0 +1,7 @@
+{
+    "mcpServers": {
+        "codebase-memory-mcp": {
+            "command": "/home/emanuele/.local/bin/codebase-memory-mcp"
+        }
+    }
+}

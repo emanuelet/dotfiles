@@ -1,0 +1,15 @@
+{
+	"auths": {},
+	"credsStore": "pass",
+	"credHelpers": {
+		"australia-southeast1-docker.pkg.dev": "gcloud"
+	},
+	"plugins": {
+		"-x-cli-hints": {
+			"enabled": "true"
+		}
+	},
+	"features": {
+		"hooks": "true"
+	}
+}
