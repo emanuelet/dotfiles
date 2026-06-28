@@ -1,0 +1,13 @@
+{{- if ne .chezmoi.os "linux" }}
+.local/bin/**
+.local/share/fonts/**
+{{ end }}
+
+{{- if not .personal }}
+.config/gh
+.config/ghostty
+.oh-my-zsh
+.oh-my-zsh/**
+.ssh
+.ssh/**
+{{ end }}

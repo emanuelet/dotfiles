@@ -1,0 +1,32 @@
+{{/* feature tags */}}
+{{- $personal := true -}}
+{{- $headless := false -}}
+{{- "" -}}
+
+{{- $osID := .chezmoi.os -}}
+{{- if (and (eq .chezmoi.os "linux") (hasKey .chezmoi.osRelease "id")) -}}
+{{-   $osID = printf "%s-%s" .chezmoi.os .chezmoi.osRelease.id -}}
+{{- end -}}
+
+{{/* detect containers, VMs, CI */}}
+{{- if eq .chezmoi.username "root" "ubuntu" "vagrant" "vscode" -}}
+{{-   $headless = true -}}
+{{-   $personal = false -}}
+{{- end -}}
+
+{{- $hostname := .chezmoi.hostname -}}
+{{- if not $headless -}}
+{{-   if eq $hostname "emantower" -}}
+{{-     $personal = true -}}
+{{-   end -}}
+{{- end -}}
+
+[onepassword]
+    mode = "account"
+
+[data]
+    personal = {{ $personal }}
+    headless = {{ $headless }}
+    hostname = {{ $hostname | quote }}
+    osid = {{ $osID | quote }}
+    githubUser = "emanuelet"
