@@ -1,5 +1,6 @@
 [tools]
-chezmoi = "2.70.0"
+bun = "latest"
+chezmoi = "latest"
 node = "lts"
 pnpm = "latest"
 python = "latest"

@@ -18,12 +18,16 @@ ZSH_THEME="robbyrussell"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git)
+plugins=(git zsh-autosuggestions zsh-syntax-highlighting mise)
 
-#source $ZSH/oh-my-zsh.sh
+source $ZSH/oh-my-zsh.sh
 
-# Preferred editor
-export EDITOR='vim'
+# Preferred editor for local and remote sessions
+if [[ -n $SSH_CONNECTION ]]; then
+  export EDITOR='vim'
+else
+  export EDITOR='nvim'
+fi
 
 # Set personal aliases, overriding those provided by Oh My Zsh libs,
 # plugins, and themes. Aliases can be placed here, though Oh My Zsh
@@ -36,7 +40,10 @@ export EDITOR='vim'
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-# enable color support of ls and also add handy aliases
+
+prompt_context(){}
+
+alias note=gnome-text-editor
 
 export GITHUB_USERNAME='emanuelet'
 
@@ -55,54 +62,13 @@ alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
 
+alias dcd='docker compose down'
+
+alias dcud='docker compose up -d'
+
 alias pn="pnpm"
 
 alias upg='sudo apt update && sudo apt upgrade'
-
-# opencode
-export PATH=/home/emanuele/.opencode/bin:$PATH
-
-eval "$(~/.local/bin/mise activate zsh)"
-
-### Added by Zinit's installer
-if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
-    print -P "%F{33} %F{220}Installing %F{33}ZDHARMA-CONTINUUM%F{220} Initiative Plugin Manager (%F{33}zdharma-continuum/zinit%F{220})…%f"
-    command mkdir -p "$HOME/.local/share/zinit" && command chmod g-rwX "$HOME/.local/share/zinit"
-    command git clone https://github.com/zdharma-continuum/zinit "$HOME/.local/share/zinit/zinit.git" && \
-        print -P "%F{33} %F{34}Installation successful.%f%b" || \
-        print -P "%F{160} The clone has failed.%f%b"
-fi
-
-source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
-autoload -Uz _zinit
-(( ${+_comps} )) && _comps[zinit]=_zinit
-
-# Load a few important annexes, without Turbo
-# (this is currently required for annexes)
-zinit light-mode for \
-    zdharma-continuum/zinit-annex-as-monitor \
-    zdharma-continuum/zinit-annex-bin-gem-node \
-    zdharma-continuum/zinit-annex-patch-dl \
-    zdharma-continuum/zinit-annex-rust
-
-### End of Zinit's installer chunk
-
-# Starship prompt
-eval "$(starship init zsh)"
-export STARSHIP_LOG=error
-
-zinit light-mode for \
-    light-mode OMZL::history.zsh \
-
-zinit wait'!' lucid atload"zicompinit; zicdreplay" for \
-    light-mode OMZL::completion.zsh \
-
-# Async plugins
-zinit ice wait lucid
-zinit light zsh-users/zsh-autosuggestions
-
-zinit ice wait lucid
-zinit light zsh-users/zsh-syntax-highlighting
 
 # History
 HISTSIZE=2000
@@ -112,19 +78,24 @@ setopt SHARE_HISTORY
 HISTCONTROL=ignoreboth
 export DEFAULT_USER=$USER
 
-# Completion cache
-autoload -Uz compinit
-compinit -C
-
-# Compile zshrc
-if [[ ! -f ~/.zshrc.zwc || ~/.zshrc -nt ~/.zshrc.zwc ]]; then
-  zcompile ~/.zshrc
-fi
-
 # pnpm
-export PNPM_HOME="/home/emanuele/.local/share/pnpm"
+export PNPM_HOME="$HOME/.local/share/pnpm"
 case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
+  *":$PNPM_HOME/bin:"*) ;;
+  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
 esac
-# pnpm end
+
+eval "$(~/.local/bin/mise activate zsh)"
+
+# opencode
+export PATH=$HOME/.opencode/bin:$PATH
+export PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64
+
+# bun completions
+[ -s "/home/emanuele/.bun/_bun" ] && source "/home/emanuele/.bun/_bun"
+
+# Added by codebase-memory-mcp install
+export PATH="$HOME/.local/bin:$PATH"
+
+# Added by bifrost installer
+export PATH="$HOME/.bifrost/bin:$PATH"
