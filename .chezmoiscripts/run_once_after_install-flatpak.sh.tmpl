@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ if eq .chezmoi.os "linux" -}}
+
+flatpak install -y flathub \
+  com.brave.Browser \
+  com.spotify.Client \
+  com.stremio.Stremio \
+  org.telegram.desktop \
+  org.gimp.GIMP \
+  com.mattjakeman.ExtensionManager \
+  2>/dev/null || echo "Some flatpaks already installed"
+
+{{- end }}

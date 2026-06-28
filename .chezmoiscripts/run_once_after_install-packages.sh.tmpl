@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ if eq .chezmoi.os "linux" -}}
+
+# Core CLI
+sudo apt install -y \
+  zsh vim git curl wget \
+  gh build-essential \
+  apt-transport-https \
+  bat eza ripgrep \
+  xclip xdotool libnotify-bin \
+  ffmpeg vlc \
+  meld shellcheck \
+  solaar \
+  nmap net-tools \
+  ca-certificates gnupg
+
+# Docker
+sudo apt install -y \
+  docker-ce docker-ce-cli containerd.io \
+  docker-buildx-plugin docker-compose-plugin \
+  2>/dev/null || echo "Docker not in apt — install manually"
+
+# 1Password (already signed by bootstrap)
+sudo apt install -y 1password 1password-cli 2>/dev/null || true
+
+# Tailscale
+sudo apt install -y tailscale 2>/dev/null || true
+
+# Google Cloud SDK
+sudo apt install -y google-cloud-cli 2>/dev/null || true
+
+# Flatpak
+sudo apt install -y flatpak gnome-software-plugin-flatpak 2>/dev/null || true
+flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true
+
+# Firefox from Mozilla PPA
+sudo snap remove firefox 2>/dev/null || true
+sudo install -d -m 0755 /etc/apt/keyrings
+wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O- | sudo tee /etc/apt/keyrings/packages.mozilla.org.asc > /dev/null
+echo "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main" | sudo tee /etc/apt/sources.list.d/mozilla.list > /dev/null
+echo '
+Package: *
+Pin: origin packages.mozilla.org
+Pin-Priority: 1000
+
+Package: firefox*
+Pin: release o=Ubuntu
+Pin-Priority: -1' | sudo tee /etc/apt/preferences.d/mozilla > /dev/null
+sudo apt update 2>/dev/null
+sudo apt install -y firefox 2>/dev/null || true
+
+{{- end }}

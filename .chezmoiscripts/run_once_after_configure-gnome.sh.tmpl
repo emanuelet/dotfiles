@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ if eq .chezmoi.os "linux" -}}
+
+# GNOME desktop settings
+gsettings set org.gnome.desktop.interface clock-show-date true 2>/dev/null || true
+gsettings set org.gnome.desktop.peripherals.touchpad natural-scroll true 2>/dev/null || true
+gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close' 2>/dev/null || true
+
+{{- end }}

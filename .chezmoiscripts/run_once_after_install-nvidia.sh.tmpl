@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ if eq .chezmoi.os "linux" -}}
+
+# Only run on NVIDIA hardware
+if command -v nvidia-smi &>/dev/null; then
+  sudo apt install -y cuda-toolkit 2>/dev/null || true
+  echo "NVIDIA CUDA toolkit installed"
+else
+  echo "No NVIDIA GPU detected — skipping CUDA"
+fi
+
+{{- end }}

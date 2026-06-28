@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Inject Anthropic API key from 1Password into ~/.claude.json
+# This only runs once — if claude.json already has a key, it's skipped.
+# Requires: op signed in
+
+API_KEY_FILE="$HOME/.claude.json"
+
+if command -v op &>/dev/null && [[ -f "$API_KEY_FILE" ]]; then
+  CURRENT_KEY=$(jq -r '.primaryApiKey // empty' "$API_KEY_FILE" 2>/dev/null)
+  if [[ -z "$CURRENT_KEY" || "$CURRENT_KEY" == "null" ]]; then
+    echo "Fetching Anthropic API key from 1Password..."
+    OP_KEY=$(op read "op://Private/Anthropic API Key/credential" 2>/dev/null || true)
+    if [[ -n "$OP_KEY" ]]; then
+      jq --arg key "$OP_KEY" '.primaryApiKey = $key' "$API_KEY_FILE" > "${API_KEY_FILE}.tmp" && mv "${API_KEY_FILE}.tmp" "$API_KEY_FILE"
+      echo "API key injected into $API_KEY_FILE"
+    else
+      echo "WARNING: Could not read Anthropic API Key from 1Password"
+    fi
+  else
+    echo "API key already present in $API_KEY_FILE — skipping"
+  fi
+fi

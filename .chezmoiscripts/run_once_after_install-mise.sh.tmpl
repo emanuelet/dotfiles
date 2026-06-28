@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Ensure mise is installed
+if ! command -v mise &>/dev/null; then
+  curl https://mise.run | sh
+fi
+
+# Install runtimes from mise config
+mise install 2>/dev/null || true
