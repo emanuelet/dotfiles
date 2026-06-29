@@ -1,0 +1,10 @@
+{{ if eq .chezmoi.os "linux" -}}
+
+#!/usr/bin/env bash
+
+if ! grep -qF "fs.inotify.max_user_watches=524288" /etc/sysctl.d/40-max-user-watches.conf; then
+    echo "fs.inotify.max_user_watches=524288" | sudo tee /etc/sysctl.d/40-max-user-watches.conf
+	sudo sysctl --system
+fi
+
+{{ end -}}
