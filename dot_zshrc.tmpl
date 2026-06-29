@@ -45,6 +45,18 @@ alias dcud='docker compose up -d'
 alias pn="pnpm"
 alias upg='sudo apt update && sudo apt upgrade'
 
+{{- if lookPath "bat" }}
+alias cat=bat
+{{- else if lookPath "batcat" }}
+alias cat=batcat
+{{- end }}
+{{- if lookPath "fdfind" }}
+alias fd=fdfind
+{{- end }}
+{{- if lookPath "eza" }}
+alias ls=eza
+{{- end }}
+
 # History
 HISTSIZE=2000
 SAVEHIST=2000
