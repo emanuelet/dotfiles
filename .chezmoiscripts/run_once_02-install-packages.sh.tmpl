@@ -5,7 +5,7 @@ set -euo pipefail
 
 # Core CLI
 sudo apt install -y \
-  zsh vim git curl wget \
+  zsh vim git curl wget fd-find jq \
   gh build-essential \
   apt-transport-https \
   bat eza ripgrep \
@@ -37,18 +37,6 @@ flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flat
 
 # Firefox from Mozilla PPA
 sudo snap remove firefox 2>/dev/null || true
-sudo install -d -m 0755 /etc/apt/keyrings
-wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O- | sudo tee /etc/apt/keyrings/packages.mozilla.org.asc > /dev/null
-echo "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main" | sudo tee /etc/apt/sources.list.d/mozilla.list > /dev/null
-echo '
-Package: *
-Pin: origin packages.mozilla.org
-Pin-Priority: 1000
-
-Package: firefox*
-Pin: release o=Ubuntu
-Pin-Priority: -1' | sudo tee /etc/apt/preferences.d/mozilla > /dev/null
-sudo apt update 2>/dev/null
 sudo apt install -y firefox 2>/dev/null || true
 
 {{- end }}
