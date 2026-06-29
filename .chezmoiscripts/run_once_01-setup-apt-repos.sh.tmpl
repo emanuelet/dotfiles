@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ if eq .chezmoi.os "linux" -}}
+
+CODENAME=$(. /etc/os-release && echo "$VERSION_CODENAME" 2>/dev/null || echo "unknown")
+ARCH=$(dpkg --print-architecture 2>/dev/null || echo "amd64")
+
+sudo install -d -m 0755 /etc/apt/keyrings
+
+# Clean up any pre-existing source files we manage
+for f in 1password brave-browser-release cloudflared depsguard docker gierens \
+  google-cloud-sdk jellyfin mcpproxy mozilla nvidia-container-toolkit \
+  spotify tailscale vscode windsurf; do
+  sudo rm -f "/etc/apt/sources.list.d/${f}.list"
+  sudo rm -f "/etc/apt/sources.list.d/${f}.sources"
+done
+
+install_repo() {
+  local name="$1" uri="$2" suite="$3" component="$4"
+  local key_url="$5" arch="${6:-amd64}"
+  local key_file="/etc/apt/keyrings/${name}.gpg"
+  local sources_file="/etc/apt/sources.list.d/${name}.sources"
+
+  if [ ! -f "$key_file" ]; then
+    sudo curl -fsSL "$key_url" -o "${key_file}.tmp" 2>/dev/null || {
+      echo "WARNING: Could not download key for ${name} (${key_url})"
+      sudo rm -f "${key_file}.tmp"
+      return 1
+    }
+    if grep -q "^-----BEGIN PGP" "${key_file}.tmp" 2>/dev/null; then
+      sudo gpg --dearmor -o "$key_file" "${key_file}.tmp" 2>/dev/null || sudo mv "${key_file}.tmp" "$key_file"
+    else
+      sudo mv "${key_file}.tmp" "$key_file"
+    fi
+    sudo rm -f "${key_file}.tmp"
+  fi
+
+  sudo rm -f "/etc/apt/sources.list.d/${name}.list"
+  sudo rm -f "/etc/apt/sources.list.d/${name}.sources"
+
+  {
+    echo "Types: deb"
+    echo "URIs: ${uri}"
+    echo "Suites: ${suite}"
+    [ -n "$component" ] && echo "Components: ${component}"
+    echo "Architectures: ${arch}"
+    echo "Signed-By: ${key_file}"
+  } | sudo tee "$sources_file" > /dev/null
+}
+
+safe_install_repo() {
+  install_repo "$@" || echo "WARNING: Failed to set up '$1' repository"
+}
+
+# 1Password
+safe_install_repo "1password" \
+  "https://downloads.1password.com/linux/debian/amd64" \
+  "stable" "main" \
+  "https://downloads.1password.com/linux/keys/1password.asc"
+
+# Brave Browser
+safe_install_repo "brave-browser" \
+  "https://brave-browser-apt-release.s3.brave.com" \
+  "stable" "main" \
+  "https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg" \
+  "amd64 arm64"
+
+# Cloudflared
+safe_install_repo "cloudflared" \
+  "https://pkg.cloudflare.com/cloudflared" \
+  "any" "main" \
+  "https://pkg.cloudflare.com/cloudflare-main.gpg"
+
+# Depsguard
+safe_install_repo "depsguard" \
+  "https://depsguard.com/apt" \
+  "stable" "main" \
+  "https://depsguard.com/apt/gpg.key"
+
+# Docker
+safe_install_repo "docker" \
+  "https://download.docker.com/linux/ubuntu" \
+  "${CODENAME}" "stable" \
+  "https://download.docker.com/linux/ubuntu/gpg"
+
+# Gierens
+safe_install_repo "gierens" \
+  "http://deb.gierens.de" \
+  "stable" "main" \
+  "https://raw.githubusercontent.com/eza-community/eza/main/deb.asc"
+
+# Google Cloud SDK
+safe_install_repo "google-cloud-sdk" \
+  "https://packages.cloud.google.com/apt" \
+  "cloud-sdk" "main" \
+  "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+
+# Jellyfin
+safe_install_repo "jellyfin" \
+  "https://repo.jellyfin.org/ubuntu" \
+  "${CODENAME}" "main" \
+  "https://repo.jellyfin.org/jellyfin.asc"
+
+# mcpproxy
+safe_install_repo "mcpproxy" \
+  "https://apt.mcpproxy.app" \
+  "stable" "main" \
+  "https://apt.mcpproxy.app/mcpproxy.gpg"
+
+# Mozilla (Firefox)
+safe_install_repo "mozilla" \
+  "https://packages.mozilla.org/apt/" \
+  "mozilla" "main" \
+  "https://packages.mozilla.org/apt/repo-signing-key.gpg"
+
+# NVIDIA Container Toolkit (flat repo)
+safe_install_repo "nvidia-container-toolkit" \
+  "https://nvidia.github.io/libnvidia-container/stable/deb/${ARCH}" \
+  "/" "" \
+  "https://nvidia.github.io/libnvidia-container/gpgkey"
+
+# Spotify
+safe_install_repo "spotify" \
+  "https://repository.spotify.com/" \
+  "stable" "non-free" \
+  "https://repository.spotify.com/debian/public.key"
+
+# Tailscale
+safe_install_repo "tailscale" \
+  "https://pkgs.tailscale.com/stable/ubuntu" \
+  "${CODENAME}" "main" \
+  "https://pkgs.tailscale.com/stable/ubuntu/${CODENAME}.noarmor.gpg"
+
+# VSCode
+safe_install_repo "vscode" \
+  "https://packages.microsoft.com/repos/code" \
+  "stable" "main" \
+  "https://packages.microsoft.com/keys/microsoft.asc"
+
+# Windsurf
+safe_install_repo "windsurf" \
+  "https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/apt/" \
+  "stable" "main" \
+  "https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/windsurf.gpg"
+
+# Mozilla apt pinning — ensure Firefox from Mozilla repo takes priority
+if [ ! -f /etc/apt/preferences.d/mozilla ]; then
+  sudo tee /etc/apt/preferences.d/mozilla > /dev/null <<'PREFERENCES_EOF'
+Package: *
+Pin: origin packages.mozilla.org
+Pin-Priority: 1000
+
+Package: firefox*
+Pin: release o=Ubuntu
+Pin-Priority: -1
+PREFERENCES_EOF
+fi
+
+sudo apt update 2>/dev/null || echo "WARNING: apt update encountered errors"
+
+{{- end }}
