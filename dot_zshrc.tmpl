@@ -14,7 +14,7 @@ plugins=(git zsh-autosuggestions zsh-syntax-highlighting mise)
 source $ZSH/oh-my-zsh.sh
 
 # Preferred editor for local and remote sessions
-export EDITOR='vim'
+export EDITOR='nvim'
 
 prompt_context() {
   if [[ "$USER" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
@@ -39,7 +39,9 @@ fi
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
+alias pbcopy='xclip -selection clipboard'
 
+alias opc='opencode'
 alias dcd='docker compose down'
 alias dcud='docker compose up -d'
 alias pn="pnpm"
@@ -78,8 +80,13 @@ eval "$(~/.local/bin/mise activate zsh)"
 export PATH=$HOME/.opencode/bin:$PATH
 export PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64
 
-# bun completions
-[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
-
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.bifrost/bin:$PATH"
+
+export PATH="/home/emanuele/.code-container/bin:$PATH"
+
+export OKF_PATH=/home/emanuele/okf-knowledge
+
+export PATH="/home/emanuele/.bun/bin:$PATH"
+
+[[ -f ~/.zshenv ]] && source ~/.zshenv

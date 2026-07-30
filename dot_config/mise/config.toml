@@ -1,6 +1,7 @@
 [tools]
 bun = "latest"
 chezmoi = "latest"
+go = "1.25"
 node = "lts"
 pnpm = "latest"
 python = "latest"
