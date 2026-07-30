@@ -22,18 +22,42 @@ install_repo() {
   local key_file="/etc/apt/keyrings/${name}.gpg"
   local sources_file="/etc/apt/sources.list.d/${name}.sources"
 
-  if [ ! -f "$key_file" ]; then
-    sudo curl -fsSL "$key_url" -o "${key_file}.tmp" 2>/dev/null || {
-      echo "WARNING: Could not download key for ${name} (${key_url})"
-      sudo rm -f "${key_file}.tmp"
+  # Re-download if missing, empty, or invalid (covers both first-run and previous failures)
+  if [ ! -s "$key_file" ]; then
+    local tmp_key; tmp_key=$(mktemp)
+    local downloaded=false
+    local retries=3
+
+    for ((i=1; i<=retries; i++)); do
+      if sudo curl -fsSL --connect-timeout 15 --retry 2 "$key_url" -o "$tmp_key" 2>/dev/null; then
+        if [ -s "$tmp_key" ]; then
+          downloaded=true
+          break
+        fi
+      fi
+      echo "  Retry $i/$retries for ${name} key..."
+      sleep 1
+    done
+
+    if [ "$downloaded" = false ]; then
+      echo "WARNING: Could not download key for ${name} after ${retries} attempts (${key_url})"
+      sudo rm -f "$tmp_key"
       return 1
-    }
-    if grep -q "^-----BEGIN PGP" "${key_file}.tmp" 2>/dev/null; then
-      sudo gpg --dearmor -o "$key_file" "${key_file}.tmp" 2>/dev/null || sudo mv "${key_file}.tmp" "$key_file"
-    else
-      sudo mv "${key_file}.tmp" "$key_file"
     fi
-    sudo rm -f "${key_file}.tmp"
+
+    # Normalize: import and re-export to ensure valid binary OpenPGP format
+    # This handles both ASCII-armored keys and old PGP block formats that gpgv rejects
+    local gpg_home; gpg_home=$(mktemp -d)
+    if gpg --homedir "$gpg_home" --import "$tmp_key" 2>/dev/null; then
+      gpg --homedir "$gpg_home" --export --output "${key_file}.tmp" 2>/dev/null
+      sudo mv "${key_file}.tmp" "$key_file"
+    else
+      # gpg couldn't parse it — move as-is (unlikely, but better than failing silently)
+      sudo mv "$tmp_key" "$key_file"
+    fi
+    rm -rf "$gpg_home"
+    sudo rm -f "$tmp_key"
+    sudo chmod 644 "$key_file"
   fi
 
   sudo rm -f "/etc/apt/sources.list.d/${name}.list"
@@ -124,7 +148,8 @@ safe_install_repo "nvidia-container-toolkit" \
 safe_install_repo "spotify" \
   "https://repository.spotify.com/" \
   "stable" "non-free" \
-  "https://repository.spotify.com/debian/public.key"
+  "https://download.spotify.com/debian/pubkey_5384CE82BA52C83A.gpg"
+# Note: old key URL (https://repository.spotify.com/debian/public.key) returns 404 since ~2025
 
 # Tailscale
 safe_install_repo "tailscale" \
